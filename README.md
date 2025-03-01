@@ -20,3 +20,4 @@ https://github.com/SPACE-Yonsei/CANSAT_AAS_2025_CAMERA로 그대로 fork했습�
 
 ## 작동 ##
 USB_csi_camera 폴더의 start.py를 실행하면 됩니다.
+start_desc.py는 같은 내용이지만 주석으로 설명이 추가되었습니다.
