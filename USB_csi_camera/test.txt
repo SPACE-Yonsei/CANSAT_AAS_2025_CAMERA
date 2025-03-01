@@ -1,0 +1,39 @@
+import cv2
+
+def main():
+    # USB 카메라 열기 (기본 장치는 0번)
+    cap = cv2.VideoCapture(0)
+   
+    if not cap.isOpened():
+        print("카메라를 열 수 없습니다.")
+        return
+
+    print("카메라가 정상적으로 열렸습니다. ESC 키로 종료, 's' 키로 스냅샷 저장.")
+   
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("프레임을 읽어올 수 없습니다.")
+            break
+
+        # 프레임을 윈도우에 표시
+        cv2.imshow('USB Camera', frame)
+       
+        # 키 입력 대기 (1ms)
+        key = cv2.waitKey(1) & 0xFF
+       
+        # ESC 키 누르면 종료
+        if key == 27:
+            print("종료 키 입력됨. 프로그램을 종료합니다.")
+            break
+        # 's' 키 누르면 스냅샷 저장
+        elif key == ord('s'):
+            cv2.imwrite('snapshot.jpg', frame)
+            print("스냅샷이 저장되었습니다: snapshot.jpg")
+   
+    # 자원 해제
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
