@@ -3,7 +3,7 @@ import time
 import signal
 import sys
 import multiprocessing as mp
-import cv2
+import cv2 # USB 카메라용
 from picamera2 import Picamera2  # 라즈베리파이 카메라 모듈3 제어용 라이브러리
 
 # -------------------------------------------------------------------------
