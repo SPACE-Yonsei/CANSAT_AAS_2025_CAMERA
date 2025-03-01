@@ -18,5 +18,5 @@ https://github.com/SPACE-Yonsei/CANSAT_AAS_2025_CAMERA로 그대로 fork했습�
    
 
 
-## 할 일 ##
-새로운 카메라가 듀얼로 작동하도록 수정해야 합니다.
+## 작동 ##
+USB_csi_camera 폴더의 start.py를 실행하면 됩니다.
