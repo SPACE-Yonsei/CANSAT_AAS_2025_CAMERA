@@ -59,12 +59,6 @@ def command_handler (recv_msg : msgstructure.MsgStructure):
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"MID {recv_msg.MsgID} not handled")
     return
 
-# Send message to be routed
-def send_message (Main_Queue : Queue, msg:str):
-    Main_Queue.put(msg)
-    return
-
-
 ######################################################
 ## INITIALIZATION, TERMINATION                      ##
 ######################################################
@@ -128,10 +122,8 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
         # Runloop
         while CAMERAAPP_RUNSTATUS:
             cameraHK = msgstructure.MsgStructure
-            msgstructure.fill_msg(cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.HkAppArg.MID_ReceiveHK, str(CAMERAAPP_RUNSTATUS))
+            msgstructure.send_msg(Main_Queue, cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.HkAppArg.MID_ReceiveHK, str(CAMERAAPP_RUNSTATUS))
 
-            # Send Message
-            send_message(Main_Queue, msgstructure.pack_msg(cameraHK))
 
             time.sleep(1)
     # If error occurs, terminate app
