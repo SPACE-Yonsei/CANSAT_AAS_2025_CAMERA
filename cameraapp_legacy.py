@@ -8,7 +8,6 @@ from lib import events
 from lib import types
 
 import os
-import signal
 from multiprocessing import Queue, connection
 import threading
 import time
@@ -24,29 +23,40 @@ CAMERAAPP_RUNSTATUS = True
 # SB Methods
 # Methods for sending/receiving/handling SB messages
 
+# This fuction is spawned as an independent thread
+# Listens SB messages routed from main app using pipe
+def SB_listner (Main_Pipe : connection.Connection):
+    global CAMERAAPP_RUNSTATUS
+    while CAMERAAPP_RUNSTATUS:
+        # Receive Message From Pipe
+        message = Main_Pipe.recv()
+        recv_msg = msgstructure.MsgStructure()
+
+        # Unpack Message, Skip this message if unpacked message is not valid
+        if msgstructure.unpack_msg(recv_msg, message) == False:
+            continue
+        
+        # Validate Message, Skip this message if target AppID different from cameraapp's AppID
+        # Exception when the message is from main app
+        if recv_msg.receiver_app == appargs.CameraAppArg.AppID or recv_msg.receiver_app == appargs.MainAppArg.AppID:
+            # Handle Command According to Message ID
+            command_handler(recv_msg)
+        else:
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, "Receiver MID does not match with cameraapp MID")
+    return
+
 # Handles received message
 def command_handler (recv_msg : msgstructure.MsgStructure):
-    global CAMERAAPP_RUNSTATUS
-
     if recv_msg.MsgID == appargs.CameraAppArg.MID_SendHK:
         print(recv_msg.data)
 
     elif recv_msg.MsgID == appargs.MainAppArg.MID_TerminateProcess:
         # Change Runstatus to false to start termination process
-        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"CAMERAAPP TERMINATION DETECTED")
+        global CAMERAAPP_RUNSTATUS
         CAMERAAPP_RUNSTATUS = False
 
     else:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"MID {recv_msg.MsgID} not handled")
-    return
-
-def send_hk(Main_Queue : Queue):
-    global CAMERAAPP_RUNSTATUS
-    while CAMERAAPP_RUNSTATUS:
-        cameraHK = msgstructure.MsgStructure
-        msgstructure.send_msg(Main_Queue, cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.HkAppArg.MID_ReceiveHK, str(CAMERAAPP_RUNSTATUS))
-
-        time.sleep(1)
     return
 
 ######################################################
@@ -55,11 +65,6 @@ def send_hk(Main_Queue : Queue):
 
 # Initialization
 def cameraapp_init():
-    global CAMERAAPP_RUNSTATUS
-    
-    # Disable Keyboardinterrupt since Termination is handled by parent process
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Starting cameraapp")
     ## User Defined Initialization goes HERE
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "cameraapp Started")
@@ -68,6 +73,8 @@ def cameraapp_init():
 def cameraapp_terminate():
     global CAMERAAPP_RUNSTATUS
 
+    current_thread = threading.current_thread().name
+        
     CAMERAAPP_RUNSTATUS = False
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Terminating cameraapp")
     # Termination Process Comes Here
@@ -75,11 +82,13 @@ def cameraapp_terminate():
     # Join Each Thread to make sure all threads terminates
     for thread_name in thread_dict:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Terminating thread {thread_name}")
-        thread_dict[thread_name].join()
+        if thread_name != current_thread:
+            thread_dict[thread_name].join()
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Terminating thread {thread_name} Complete")
 
     # The termination flag should switch to false AFTER ALL TERMINATION PROCESS HAS ENDED
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Terminating cameraapp complete")
+    sys.exit()
     return
 
 ######################################################
@@ -103,30 +112,20 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
     cameraapp_init()
 
     # Spawn SB Message Listner Thread
-    thread_dict["HKSender_Thread"] = threading.Thread(target=send_hk, args=(Main_Queue, ), name="HKSender_Thread")
+    thread_dict["SBListner_Thread"] = threading.Thread(target=SB_listner, args=(Main_Pipe, ), name="SBListner_Thread")
 
     # Spawn Each Threads
     for thread_name in thread_dict:
         thread_dict[thread_name].start()
 
     try:
+        # Runloop
         while CAMERAAPP_RUNSTATUS:
-            # Receive Message From Pipe
-            message = Main_Pipe.recv()
-            recv_msg = msgstructure.MsgStructure()
+            cameraHK = msgstructure.MsgStructure
+            msgstructure.send_msg(Main_Queue, cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.HkAppArg.MID_ReceiveHK, str(CAMERAAPP_RUNSTATUS))
 
-            # Unpack Message, Skip this message if unpacked message is not valid
-            if msgstructure.unpack_msg(recv_msg, message) == False:
-                continue
-            
-            # Validate Message, Skip this message if target AppID different from cameraapp's AppID
-            # Exception when the message is from main app
-            if recv_msg.receiver_app == appargs.CameraAppArg.AppID or recv_msg.receiver_app == appargs.MainAppArg.AppID:
-                # Handle Command According to Message ID
-                command_handler(recv_msg)
-            else:
-                events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, "Receiver MID does not match with cameraapp MID")
 
+            time.sleep(1)
     # If error occurs, terminate app
     except Exception as e:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"cameraapp error : {e}")
