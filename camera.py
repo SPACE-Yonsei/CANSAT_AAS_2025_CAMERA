@@ -3,7 +3,7 @@ import time
 import signal
 import sys
 import multiprocessing as mp
-import cv2 # USB 카메라용
+#import cv2 # USB 카메라용
 from picamera2 import Picamera2  # 라즈베리파이 카메라 모듈3 제어용 라이브러리
 
 # -------------------------------------------------------------------------
@@ -15,6 +15,7 @@ def capture_and_save_pi(shutdown_event, output_dir="videos", interval=10):
     # 영상 파일을 저장할 디렉토리가 존재하지 않으면 생성합니다.
     os.makedirs(output_dir, exist_ok=True)
     try:
+        print("camera out")
         # Picamera2 객체를 생성하여 라즈베리파이 카메라 모듈3에 접근합니다.
         picam2 = Picamera2()
         # 1920x1080 해상도로 영상 캡처를 위한 기본 구성(configuration)을 생성합니다.
@@ -66,6 +67,7 @@ def capture_and_save_pi(shutdown_event, output_dir="videos", interval=10):
 # 목적: USB 카메라를 사용하여 영상을 캡처하고,
 #       일정 시간 간격마다 (interval) 캡처한 영상을 MP4 파일로 저장합니다.
 # -------------------------------------------------------------------------
+"""
 def capture_and_save_usb(shutdown_event, usb_index, output_dir="videos", interval=10):
     # 영상 파일을 저장할 디렉토리가 존재하지 않으면 생성합니다.
     os.makedirs(output_dir, exist_ok=True)
@@ -119,6 +121,7 @@ def capture_and_save_usb(shutdown_event, usb_index, output_dir="videos", interva
         if cap:
             cap.release()
         print(f"USB Camera (index {usb_index}) stopped.")
+"""
 
 # -------------------------------------------------------------------------
 # 함수: handle_signal
@@ -147,14 +150,15 @@ def main():
     processes = []  # 자식 프로세스들을 저장할 리스트
 
     # Raspberry Pi Camera Module 3용 프로세스 생성 및 시작
+    print("starting save pi")
     p_pi = mp.Process(target=capture_and_save_pi, args=(shutdown_event, output_dir, interval))
     p_pi.start()
     processes.append(p_pi)
 
     # USB 카메라용 프로세스 생성 및 시작
-    p_usb = mp.Process(target=capture_and_save_usb, args=(shutdown_event, usb_index, output_dir, interval))
-    p_usb.start()
-    processes.append(p_usb)
+    #p_usb = mp.Process(target=capture_and_save_usb, args=(shutdown_event, usb_index, output_dir, interval))
+    #p_usb.start()
+    #processes.append(p_usb)
 
     try:
         # 종료 이벤트가 발생할 때까지 메인 프로세스는 대기합니다.
