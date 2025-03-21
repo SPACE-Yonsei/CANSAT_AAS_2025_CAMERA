@@ -26,3 +26,7 @@ time.sleep(2)  # 카메라가 안정화될 시간을 줍니다.
 encoder = MJPEGEncoder()
 picam2.start_recording(encoder, "recorded_video.mjpeg")
 print("영상 녹화 시작...")
+
+
+time.sleep(10)
+picam2.stop_recording()
