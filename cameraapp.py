@@ -7,12 +7,10 @@ from lib import logging
 from lib import events
 from lib import types
 
-import os
 import signal
 from multiprocessing import Queue, connection
 import threading
 import time
-import sys
 
 # Runstatus of application. Application is terminated when false
 CAMERAAPP_RUNSTATUS = True
@@ -28,10 +26,7 @@ CAMERAAPP_RUNSTATUS = True
 def command_handler (recv_msg : msgstructure.MsgStructure):
     global CAMERAAPP_RUNSTATUS
 
-    if recv_msg.MsgID == appargs.CameraAppArg.MID_SendHK:
-        print(recv_msg.data)
-
-    elif recv_msg.MsgID == appargs.MainAppArg.MID_TerminateProcess:
+    if recv_msg.MsgID == appargs.MainAppArg.MID_TerminateProcess:
         # Change Runstatus to false to start termination process
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"CAMERAAPP TERMINATION DETECTED")
         CAMERAAPP_RUNSTATUS = False
@@ -44,8 +39,7 @@ def send_hk(Main_Queue : Queue):
     global CAMERAAPP_RUNSTATUS
     while CAMERAAPP_RUNSTATUS:
         cameraHK = msgstructure.MsgStructure
-        msgstructure.send_msg(Main_Queue, cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.HkAppArg.MID_ReceiveHK, str(CAMERAAPP_RUNSTATUS))
-
+        msgstructure.send_msg(Main_Queue, cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.CameraAppArg.MID_SendHK, str(CAMERAAPP_RUNSTATUS))
         time.sleep(1)
     return
 
@@ -56,13 +50,16 @@ def send_hk(Main_Queue : Queue):
 # Initialization
 def cameraapp_init():
     global CAMERAAPP_RUNSTATUS
-    
-    # Disable Keyboardinterrupt since Termination is handled by parent process
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        # Disable Keyboardinterrupt since Termination is handled by parent process
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Starting cameraapp")
-    ## User Defined Initialization goes HERE
-    events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "cameraapp Started")
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Initializating cameraapp")
+        ## User Defined Initialization goes HERE
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Cameraapp Initialization Complete")
+    except Exception as e:
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, "Error during initialization")
+        CAMERAAPP_RUNSTATUS = False
 
 # Termination
 def cameraapp_terminate():
