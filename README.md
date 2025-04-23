@@ -15,20 +15,14 @@ https://github.com/SPACE-Yonsei/CANSAT_AAS_2025_CAMERA로 그대로 fork했습�
    라즈베리파이 카메라 모듈3 wide 모듈
    csi 연결
    https://www.devicemart.co.kr/goods/view?no=14933041&srsltid=AfmBOorDyELdARatq3CNLnmsH2FBQo-R_73Pz7g0wLyOtexw_ksDPR6A
-   
-
 
 ## 작동 ##
 USB_csi_camera 폴더의 start.py를 실행하면 됩니다.
 start_desc.py는 같은 내용이지만 주석으로 설명이 추가되었습니다.
 
-
-
 csi_camera_0321.py 돌리면 csi만 잘 됨
 
 csi_usb_mfeg.py는 usb까지.
-
-
 
 FFmpeg 설치
 https://www.gyan.dev/ffmpeg/builds/
