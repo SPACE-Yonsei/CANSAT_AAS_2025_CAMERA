@@ -90,3 +90,8 @@ def terminate_fit0892():
 
     cam.release()
     out.release()
+
+if __name__ == "__main__": 
+    init_fit0892()
+    record_fit0892()
+    terminate_fit0892()

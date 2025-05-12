@@ -48,5 +48,7 @@ def record_picam(record_time_sec:int):
     picam2.stop_recording()
     return
 
-
+if __name__ == "__main__":
+    init_picam()
+    record_picam()
 
