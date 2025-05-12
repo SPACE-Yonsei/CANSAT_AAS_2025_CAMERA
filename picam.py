@@ -36,19 +36,13 @@ def init_picam():
 def record_picam(record_time_sec:int):
     global picam2
     
-    # Set timestemp
-    timestamp = datetime.now().isoformat(sep=' ', timespec='milliseconds')
-
-    # Set video file path
-    video_path = f"{PICAM_VIDEO_DIR}/{PICAM_VIDEO_NAME_HEADER}_{timestamp}.{PICAM_VIDEO_FORMAT}"
-    picam2.start_recording(video_path)
-
-    time.sleep(record_time_sec)
-
+    picam2.start()
+    picam2.start_recording(f"{PICAM_VIDEO_DIR}/{PICAM_VIDEO_NAME_HEADER}_{datetime.now():%Y%m%d_%H%M%S}.{PICAM_VIDEO_FORMAT}")
+    time.sleep(sec)
     picam2.stop_recording()
-    return
+    picam2.stop()
 
 if __name__ == "__main__":
     init_picam()
-    record_picam()
+    record_picam(5)
 
