@@ -38,7 +38,7 @@ def record_picam(record_time_sec:int):
     
     picam2.start()
     picam2.start_recording(f"{PICAM_VIDEO_DIR}/{PICAM_VIDEO_NAME_HEADER}_{datetime.now():%Y%m%d_%H%M%S}.{PICAM_VIDEO_FORMAT}")
-    time.sleep(sec)
+    time.sleep(record_time_sec)
     picam2.stop_recording()
     picam2.stop()
 
