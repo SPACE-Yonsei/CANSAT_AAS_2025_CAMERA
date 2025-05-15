@@ -42,10 +42,10 @@ def record_picam(picam2, record_time_sec:int):
     picam2.start_recording(video_path)
 
     time.sleep(record_time_sec)
-
     picam2.stop_recording()
-    return
+    picam2.stop()
 
 if __name__ == "__main__":
     init_picam()
-    record_picam()
+    record_picam(5)
+
