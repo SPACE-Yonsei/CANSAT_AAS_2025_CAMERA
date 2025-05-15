@@ -37,15 +37,7 @@ def init_fit0892():
     cam.set(cv2.CAP_PROP_FPS, FIT0892_VIDEO_FRAMERATE)
 
     if not cam.isOpened():
-    raise RuntimeError("카메라를 열 수 없습니다.")
-
-    out = cv2.VideoWriter(...)
-
-    if not out.isOpened():
-    raise RuntimeError("VideoWriter를 열 수 없습니다.")
-
-
-
+        return False
     
     # Set fourcc variable
     fourcc = cv2.VideoWriter.fourcc('M','J','P','G')
