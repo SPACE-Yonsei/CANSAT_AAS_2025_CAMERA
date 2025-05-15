@@ -21,6 +21,7 @@ def init_cam() -> Picamera2:
         controls={"FrameDurationLimits": (FRAME_US, FRAME_US)}  # 고정 fps 설정:contentReference[oaicite:0]{index=0}
     )
     cam.configure(cfg)
+    cam.start()
     return cam
 
 def record(cam: Picamera2, sec: int):
@@ -29,12 +30,17 @@ def record(cam: Picamera2, sec: int):
     fname = PICAM_VIDEO_DIR / f"{PICAM_VIDEO_NAME_HEADER}_{stamp}.mjpeg"
 
     enc = MJPEGEncoder()                           # MJPEG → .mjpeg 파일로 저장:contentReference[oaicite:1]{index=1}
-    cam.start()
+    #cam.start()
     cam.start_recording(enc, FileOutput(str(fname)))
     time.sleep(sec)
     cam.stop_recording()
-    cam.close()                                    # 자원 정리
+    #cam.close()                                    # 자원 정리
+
+def terminate(cam: Picamera2):
+    cam.close()
 
 if __name__ == "__main__":
     cam = init_cam()
     record(cam, RECORD_SEC)
+    record(cam, RECORD_SEC)
+    terminate(cam)
