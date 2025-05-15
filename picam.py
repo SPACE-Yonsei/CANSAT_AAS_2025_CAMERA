@@ -18,11 +18,8 @@ PICAM_CONV_FRAMERATE = int(1000000/PICAM_VIDEO_FRAMERATE)
 PICAM_VIDEO_WIDTH = int(640)
 PICAM_VIDEO_HEIGHT = int(480)
 
-# Create empty pi camera object
-picam2 = None
 
 def init_picam():
-    global picam2
 
     picam2 = Picamera2()
     
@@ -32,12 +29,13 @@ def init_picam():
     )
 
     picam2.configure(video_config)
+    
+    return picam2
 
-def record_picam(record_time_sec:int):
-    global picam2
+def record_picam(picam2, record_time_sec:int):
     
     # Set timestemp
-    timestamp = datetime.now().isoformat(sep=' ', timespec='milliseconds')
+    timestamp = datetime.now().isoformat(sep=':', timespec='milliseconds')
 
     # Set video file path
     video_path = f"{PICAM_VIDEO_DIR}/{PICAM_VIDEO_NAME_HEADER}_{timestamp}.{PICAM_VIDEO_FORMAT}"
@@ -51,4 +49,3 @@ def record_picam(record_time_sec:int):
 if __name__ == "__main__":
     init_picam()
     record_picam()
-

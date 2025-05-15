@@ -21,16 +21,10 @@ FIT0892_VIDEO_FRAMERATE = int(25)
 FIT0892_VIDEO_WIDTH = int(640)
 FIT0892_VIDEO_HEIGHT = int(480)
 
-# Create empty camera variable
-cam = None
-# Create empty fourcc variable
-fourcc = None
 # Create empty video output variable
 out = None
 
 def init_fit0892():
-    global cam
-    global fourcc
 
     # Create directory for video if it doesn't exist
     os.makedirs(FIT0892_VIDEO_DIR, exist_ok=True)
@@ -48,10 +42,9 @@ def init_fit0892():
     # Set fourcc variable
     fourcc = cv2.VideoWriter.fourcc('M','J','P','G')
 
-    return True
+    return cam, fourcc
 
-def record_fit0892(record_time_sec : int):
-    global fourcc
+def record_fit0892(cam, fourcc, record_time_sec : int):
     global out
 
     # Count the frames wrote to file
@@ -62,7 +55,7 @@ def record_fit0892(record_time_sec : int):
     max_frame_count = FIT0892_VIDEO_FRAMERATE * record_time_sec
 
     # Set timestemp
-    timestamp = datetime.now().isoformat(sep=' ', timespec='milliseconds')
+    timestamp = datetime.now().isoformat(sep=':', timespec='milliseconds')
 
     # Set video file path
     video_path = f"{FIT0892_VIDEO_DIR}/{FIT0892_VIDEO_NAME_HEADER}_{timestamp}.{FIT0892_VIDEO_FORMAT}"
@@ -84,14 +77,13 @@ def record_fit0892(record_time_sec : int):
     out.release()
 
 # Camera Termination Method
-def terminate_fit0892():
+def terminate_fit0892(cam):
     global out
-    global cam
 
     cam.release()
     out.release()
 
 if __name__ == "__main__": 
     init_fit0892()
-    record_fit0892()
+    record_fit0892(5)
     terminate_fit0892()

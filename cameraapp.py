@@ -56,18 +56,30 @@ def cameraapp_init():
 
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Initializating cameraapp")
         ## User Defined Initialization goes HERE
+        try:
+            fit0892cam_instance, fit0892fourcc_instance = fit0892.init_fit0892()
+        except Exception as e:
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
+        
+        try:
+            picam_instance = picam.init_picam()
+        except Exception as e:
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
+
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Cameraapp Initialization Complete")
     except Exception as e:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, "Error during initialization")
         CAMERAAPP_RUNSTATUS = False
+    return fit0892cam_instance, fit0892fourcc_instance, picam_instance
 
 # Termination
-def cameraapp_terminate():
+def cameraapp_terminate(fit0892cam_instance):
     global CAMERAAPP_RUNSTATUS
 
     CAMERAAPP_RUNSTATUS = False
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Terminating cameraapp")
     # Termination Process Comes Here
+    fit0892.terminate_fit0892(fit0892cam_instance)
 
     # Join Each Thread to make sure all threads terminates
     for thread_name in thread_dict:
@@ -82,7 +94,30 @@ def cameraapp_terminate():
 ######################################################
 ## USER METHOD                                      ##
 ######################################################
+from camera import fit0892
+from camera import picam
 
+CAMERA_RECORD_SEC = 7
+
+def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
+    global CAMERAAPP_RUNSTATUS
+    while CAMERAAPP_RUNSTATUS:
+        try:
+            fit0892.record_fit0892(fit0892cam_instance, fit0892fourcc_instance, CAMERA_RECORD_SEC)
+        except Exception as e: 
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording fit0892 : {e}")
+            time.sleep(1)
+
+    return
+def picam_record_thread(picam_instance):
+    global CAMERAAPP_RUNSTATUS
+    while CAMERAAPP_RUNSTATUS:
+        try:
+            picam.record_picam(picam_instance, CAMERA_RECORD_SEC)
+        except Exception as e:
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording picam : {e}")
+            time.sleep(1)
+    return
 # Put user-defined methods here!
 
 ######################################################
@@ -97,10 +132,12 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
     CAMERAAPP_RUNSTATUS = True
 
     # Initialization Process
-    cameraapp_init()
+    fit0892cam_instance, fit0892fourcc_instance, picam_instance = cameraapp_init()
 
     # Spawn SB Message Listner Thread
     thread_dict["HKSender_Thread"] = threading.Thread(target=send_hk, args=(Main_Queue, ), name="HKSender_Thread")
+    thread_dict["Fit0892Recorder_Thread"] = threading.Thread(target=fit0892_record_thread, args=(fit0892cam_instance, fit0892fourcc_instance, ), name="Fit0892Recorder_Thread")
+    thread_dict["PicamRecorder_Thread"]  = threading.Thread(target=picam_record_thread, args=(picam_instance, ), name="PicamRecorder_Thread")
 
     # Spawn Each Threads
     for thread_name in thread_dict:
@@ -130,6 +167,6 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
         CAMERAAPP_RUNSTATUS = False
 
     # Termination Process after runloop
-    cameraapp_terminate()
+    cameraapp_terminate(fit0892cam_instance)
 
     return
