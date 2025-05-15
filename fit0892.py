@@ -68,7 +68,8 @@ def record_fit0892(cam, fourcc, record_time_sec : int):
         if not ret:
             print("Error writing frame")
             current_frame_count += 1
-            continue
+            return
+            
 
         out.write(frame)
         print(f"writing frame {current_frame_count}")
