@@ -112,7 +112,7 @@ def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
             fit0892.record_fit0892(fit0892cam_instance, fit0892fourcc_instance, CAMERA_RECORD_SEC)
         except Exception as e: 
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording fit0892 : {e}")
-            time.sleep(1)
+            return
 
     return
 def picam_record_thread(picam_instance):

@@ -37,7 +37,7 @@ def init_fit0892():
     cam.set(cv2.CAP_PROP_FPS, FIT0892_VIDEO_FRAMERATE)
 
     if not cam.isOpened():
-        return False
+        return None, None
     
     # Set fourcc variable
     fourcc = cv2.VideoWriter.fourcc('M','J','P','G')
@@ -67,6 +67,7 @@ def record_fit0892(cam, fourcc, record_time_sec : int):
 
         if not ret:
             print("Error writing frame")
+            current_frame_count += 1
             continue
 
         out.write(frame)

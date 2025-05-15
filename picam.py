@@ -21,6 +21,10 @@ def init_cam() -> Picamera2:
         controls={"FrameDurationLimits": (FRAME_US, FRAME_US)}  # 고정 fps 설정:contentReference[oaicite:0]{index=0}
     )
     cam.configure(cfg)
+    
+    if not cam.camera_config:
+        return None
+    
     cam.start()
     return cam
 
