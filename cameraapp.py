@@ -50,26 +50,27 @@ def send_hk(Main_Queue : Queue):
 # Initialization
 def cameraapp_init():
     global CAMERAAPP_RUNSTATUS
+    fit0892cam_instance = None
+    fit0892fourcc_instance = None
+    picam_instance = None
+
+    # Disable Keyboardinterrupt since Termination is handled by parent process
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Initializating cameraapp")
+    ## User Defined Initialization goes HERE
     try:
-        # Disable Keyboardinterrupt since Termination is handled by parent process
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Initializating cameraapp")
-        ## User Defined Initialization goes HERE
-        try:
-            fit0892cam_instance, fit0892fourcc_instance = fit0892.init_fit0892()
-        except Exception as e:
-            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
-        
-        try:
-            picam_instance = picam.init_cam()
-        except Exception as e:
-            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
-
-        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Cameraapp Initialization Complete")
+        fit0892cam_instance, fit0892fourcc_instance = fit0892.init_fit0892()
     except Exception as e:
-        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, "Error during initialization")
-        CAMERAAPP_RUNSTATUS = False
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
+    
+    try:
+        picam_instance = picam.init_cam()
+    except Exception as e:
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
+
+    events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Cameraapp Initialization Complete")
+
     return fit0892cam_instance, fit0892fourcc_instance, picam_instance
 
 # Termination
@@ -102,6 +103,10 @@ CAMERA_RECORD_SEC = 7
 
 def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
     global CAMERAAPP_RUNSTATUS
+    if fit0892cam_instance == None:
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Fit0892 not initialized! Terminating thread")
+        return
+
     while CAMERAAPP_RUNSTATUS:
         try:
             fit0892.record_fit0892(fit0892cam_instance, fit0892fourcc_instance, CAMERA_RECORD_SEC)
@@ -112,6 +117,10 @@ def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
     return
 def picam_record_thread(picam_instance):
     global CAMERAAPP_RUNSTATUS
+
+    if picam_instance == None:
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Picam not initialized! Terminating thread")
+
     while CAMERAAPP_RUNSTATUS:
         try:
             picam.record(picam_instance, CAMERA_RECORD_SEC)
