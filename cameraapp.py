@@ -62,7 +62,7 @@ def cameraapp_init():
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
         
         try:
-            picam_instance = picam.init_picam()
+            picam_instance = picam.init_cam()
         except Exception as e:
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
 
@@ -73,13 +73,14 @@ def cameraapp_init():
     return fit0892cam_instance, fit0892fourcc_instance, picam_instance
 
 # Termination
-def cameraapp_terminate(fit0892cam_instance):
+def cameraapp_terminate(fit0892cam_instance, picam_instance):
     global CAMERAAPP_RUNSTATUS
 
     CAMERAAPP_RUNSTATUS = False
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Terminating cameraapp")
     # Termination Process Comes Here
     fit0892.terminate_fit0892(fit0892cam_instance)
+    picam.terminate(picam_instance)
 
     # Join Each Thread to make sure all threads terminates
     for thread_name in thread_dict:
@@ -113,7 +114,7 @@ def picam_record_thread(picam_instance):
     global CAMERAAPP_RUNSTATUS
     while CAMERAAPP_RUNSTATUS:
         try:
-            picam.record_picam(picam_instance, CAMERA_RECORD_SEC)
+            picam.record(picam_instance, CAMERA_RECORD_SEC)
         except Exception as e:
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording picam : {e}")
             time.sleep(1)
@@ -167,6 +168,6 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
         CAMERAAPP_RUNSTATUS = False
 
     # Termination Process after runloop
-    cameraapp_terminate(fit0892cam_instance)
+    cameraapp_terminate(fit0892cam_instance, picam_instance)
 
     return

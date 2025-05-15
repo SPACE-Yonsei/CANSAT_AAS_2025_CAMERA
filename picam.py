@@ -1,51 +1,46 @@
 from picamera2 import Picamera2
+from picamera2.encoders import MJPEGEncoder        # ← MJPEG (HW 인코더) 사용
+from picamera2.outputs import FileOutput
 from datetime import datetime
-import time
+import os, time, pathlib
 
-PICAM_VIDEO_DIR = "PICAM_Video"
-
-# Since there will be multiple files with different timestamp on the name, set the header
+# ──────────────────────────────────────────────
+PICAM_VIDEO_DIR = pathlib.Path("PICAM_Video")
 PICAM_VIDEO_NAME_HEADER = "PICAM"
+RECORD_SEC = 5
+FPS = 30
+FRAME_US = int(1_000_000 / FPS)                   # 33333 µs @30 fps
+WIDTH, HEIGHT = 640, 480
+# ──────────────────────────────────────────────
 
-# Set the format of video
-PICAM_VIDEO_FORMAT = "avi"
+def init_cam() -> Picamera2:
+    cam = Picamera2()
 
-# Set the frame rate of video
-PICAM_VIDEO_FRAMERATE = int(30)
-PICAM_CONV_FRAMERATE = int(1000000/PICAM_VIDEO_FRAMERATE)
-
-# Set the resolution of video
-PICAM_VIDEO_WIDTH = int(640)
-PICAM_VIDEO_HEIGHT = int(480)
-
-
-def init_picam():
-
-    picam2 = Picamera2()
-    
-    video_config = picam2.create_video_configuration(
-        main={"size": (PICAM_VIDEO_WIDTH, PICAM_VIDEO_HEIGHT), "format": "MJPEG"},
-        controls={"FrameDurationLimits": (PICAM_CONV_FRAMERATE, PICAM_CONV_FRAMERATE)}
+    cfg = cam.create_video_configuration(
+        main={"size": (WIDTH, HEIGHT), "format": "RGB888"},
+        controls={"FrameDurationLimits": (FRAME_US, FRAME_US)}  # 고정 fps 설정:contentReference[oaicite:0]{index=0}
     )
+    cam.configure(cfg)
+    cam.start()
+    return cam
 
-    picam2.configure(video_config)
-    
-    return picam2
+def record(cam: Picamera2, sec: int):
+    PICAM_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    fname = PICAM_VIDEO_DIR / f"{PICAM_VIDEO_NAME_HEADER}_{stamp}.mjpeg"
 
-def record_picam(picam2, record_time_sec:int):
-    
-    # Set timestemp
-    timestamp = datetime.now().isoformat(sep=':', timespec='milliseconds')
+    enc = MJPEGEncoder()                           # MJPEG → .mjpeg 파일로 저장:contentReference[oaicite:1]{index=1}
+    #cam.start()
+    cam.start_recording(enc, FileOutput(str(fname)))
+    time.sleep(sec)
+    cam.stop_recording()
+    #cam.close()                                    # 자원 정리
 
-    # Set video file path
-    video_path = f"{PICAM_VIDEO_DIR}/{PICAM_VIDEO_NAME_HEADER}_{timestamp}.{PICAM_VIDEO_FORMAT}"
-    picam2.start_recording(video_path)
-
-    time.sleep(record_time_sec)
-    picam2.stop_recording()
-    picam2.stop()
+def terminate(cam: Picamera2):
+    cam.close()
 
 if __name__ == "__main__":
-    init_picam()
-    record_picam(5)
-
+    cam = init_cam()
+    record(cam, RECORD_SEC)
+    record(cam, RECORD_SEC)
+    terminate(cam)
