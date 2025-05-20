@@ -65,13 +65,13 @@ def cameraapp_init():
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
     
     try:
-        picam_instance = picam.init_cam()
+        picam_instance, picamencoder_instance = picam.init_cam()
     except Exception as e:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
 
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Cameraapp Initialization Complete")
 
-    return fit0892cam_instance, fit0892fourcc_instance, picam_instance
+    return fit0892cam_instance, fit0892fourcc_instance, picam_instance, picamencoder_instance
 
 # Termination
 def cameraapp_terminate(fit0892cam_instance, picam_instance):
@@ -115,7 +115,7 @@ def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
             return
 
     return
-def picam_record_thread(picam_instance):
+def picam_record_thread(picam_instance, picamencoder_instance):
     global CAMERAAPP_RUNSTATUS
 
     if picam_instance == None:
@@ -123,7 +123,7 @@ def picam_record_thread(picam_instance):
 
     while CAMERAAPP_RUNSTATUS:
         try:
-            picam.record(picam_instance, CAMERA_RECORD_SEC)
+            picam.record(picam_instance, picamencoder_instance, CAMERA_RECORD_SEC)
         except Exception as e:
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording picam : {e}")
             time.sleep(1)
@@ -150,12 +150,12 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
     CAMERAAPP_RUNSTATUS = True
 
     # Initialization Process
-    fit0892cam_instance, fit0892fourcc_instance, picam_instance = cameraapp_init()
+    fit0892cam_instance, fit0892fourcc_instance, picam_instance, picamencoder_instance = cameraapp_init()
 
     # Spawn SB Message Listner Thread
     thread_dict["HKSender_Thread"] = threading.Thread(target=send_hk, args=(Main_Queue, ), name="HKSender_Thread")
     thread_dict["Fit0892Recorder_Thread"] = threading.Thread(target=fit0892_record_thread, args=(fit0892cam_instance, fit0892fourcc_instance, ), name="Fit0892Recorder_Thread")
-    thread_dict["PicamRecorder_Thread"]  = threading.Thread(target=picam_record_thread, args=(picam_instance, ), name="PicamRecorder_Thread")
+    thread_dict["PicamRecorder_Thread"]  = threading.Thread(target=picam_record_thread, args=(picam_instance, picamencoder_instance), name="PicamRecorder_Thread")
 
     # Spawn Each Threads
     for thread_name in thread_dict:

@@ -1,4 +1,3 @@
-import cv2
 from datetime import datetime
 import os
 
@@ -26,25 +25,31 @@ out = None
 
 def init_fit0892():
 
+    from cv2 import VideoCapture
+    from cv2 import CAP_PROP_FPS, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT
+    from cv2 import VideoWriter
+
     # Create directory for video if it doesn't exist
     os.makedirs(FIT0892_VIDEO_DIR, exist_ok=True)
 
     # Set the index of camera
-    cam = cv2.VideoCapture(FIT0892_CAMERA_INDEX)
+    cam = VideoCapture(FIT0892_CAMERA_INDEX)
 
-    cam.set(cv2.CAP_PROP_FRAME_WIDTH, FIT0892_VIDEO_WIDTH)
-    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, FIT0892_VIDEO_HEIGHT)
-    cam.set(cv2.CAP_PROP_FPS, FIT0892_VIDEO_FRAMERATE)
+    cam.set(CAP_PROP_FRAME_WIDTH, FIT0892_VIDEO_WIDTH)
+    cam.set(CAP_PROP_FRAME_HEIGHT, FIT0892_VIDEO_HEIGHT)
+    cam.set(CAP_PROP_FPS, FIT0892_VIDEO_FRAMERATE)
 
     if not cam.isOpened():
         return None, None
     
     # Set fourcc variable
-    fourcc = cv2.VideoWriter.fourcc('M','J','P','G')
+    fourcc = VideoWriter.fourcc('M','J','P','G')
 
     return cam, fourcc
 
 def record_fit0892(cam, fourcc, record_time_sec : int):
+    from cv2 import VideoWriter
+
     global out
 
     # Count the frames wrote to file
@@ -60,7 +65,7 @@ def record_fit0892(cam, fourcc, record_time_sec : int):
     # Set video file path
     video_path = f"{FIT0892_VIDEO_DIR}/{FIT0892_VIDEO_NAME_HEADER}_{timestamp}.{FIT0892_VIDEO_FORMAT}"
 
-    out = cv2.VideoWriter(video_path, fourcc, FIT0892_VIDEO_FRAMERATE, (FIT0892_VIDEO_WIDTH, FIT0892_VIDEO_HEIGHT))
+    out = VideoWriter(video_path, fourcc, FIT0892_VIDEO_FRAMERATE, (FIT0892_VIDEO_WIDTH, FIT0892_VIDEO_HEIGHT))
 
     while current_frame_count < max_frame_count:
         ret, frame = cam.read()
@@ -69,7 +74,6 @@ def record_fit0892(cam, fourcc, record_time_sec : int):
             print("Error writing frame")
             current_frame_count += 1
             return
-            
 
         out.write(frame)
         print(f"writing frame {current_frame_count}")
