@@ -53,21 +53,23 @@ def cameraapp_init():
     fit0892cam_instance = None
     fit0892fourcc_instance = None
     picam_instance = None
+    picamencoder_instance = None
 
     # Disable Keyboardinterrupt since Termination is handled by parent process
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Initializating cameraapp")
+    try:
+        picam_instance, picamencoder_instance = picam.init_cam()
+    except Exception as e:
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
+        
     ## User Defined Initialization goes HERE
     try:
         fit0892cam_instance, fit0892fourcc_instance = fit0892.init_fit0892()
     except Exception as e:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
     
-    try:
-        picam_instance, picamencoder_instance = picam.init_cam()
-    except Exception as e:
-        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing picam : {e}")
 
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, "Cameraapp Initialization Complete")
 
@@ -112,6 +114,7 @@ def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
             fit0892.record_fit0892(fit0892cam_instance, fit0892fourcc_instance, CAMERA_RECORD_SEC)
         except Exception as e: 
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording fit0892 : {e}")
+            time.sleep(1)
             return
 
     return
