@@ -1,95 +1,84 @@
+
+#!/usr/bin/env python3
 from datetime import datetime
-import os
+import time
+import pathlib
+import cv2
 
-# Usually the index of camera is 0 when only one camera is connected to USB port
-FIT0892_CAMERA_INDEX = 0
+# ──────────────────────────────────────────────
+FIT_VIDEO_DIR         = pathlib.Path("FIT0892_Video")
+FIT_VIDEO_NAME_HEADER = "FIT0892"
+RECORD_SEC            = 5
+FPS                   = 25
+WIDTH, HEIGHT         = 640, 480
+# ──────────────────────────────────────────────
 
-# Directory name where the video is saved
-FIT0892_VIDEO_DIR = "FIT0892_Video"
-
-# Since there will be multiple files with different timestamp on the name, set the header
-FIT0892_VIDEO_NAME_HEADER = "FIT0892"
-
-# Set the format of video
-FIT0892_VIDEO_FORMAT = "avi"
-
-# Set the frame rate of video
-FIT0892_VIDEO_FRAMERATE = int(25)
-
-# Set the resolution of video
-FIT0892_VIDEO_WIDTH = int(640)
-FIT0892_VIDEO_HEIGHT = int(480)
-
-# Create empty video output variable
-out = None
-
-def init_fit0892():
-
-    from cv2 import VideoCapture
-    from cv2 import CAP_PROP_FPS, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT
-    from cv2 import VideoWriter
-
-    # Create directory for video if it doesn't exist
-    os.makedirs(FIT0892_VIDEO_DIR, exist_ok=True)
-
-    # Set the index of camera
-    cam = VideoCapture(FIT0892_CAMERA_INDEX)
-
-    cam.set(CAP_PROP_FRAME_WIDTH, FIT0892_VIDEO_WIDTH)
-    cam.set(CAP_PROP_FRAME_HEIGHT, FIT0892_VIDEO_HEIGHT)
-    cam.set(CAP_PROP_FPS, FIT0892_VIDEO_FRAMERATE)
-
+def init_cam():
+    """
+    Open the USB camera via V4L2 and prepare MJPG codec.
+    Returns (VideoCapture, fourcc) or (None, None) on failure.
+    """
+    cam = cv2.VideoCapture(0, cv2.CAP_V4L2)
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH,  WIDTH)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+    cam.set(cv2.CAP_PROP_FPS,         FPS)
     if not cam.isOpened():
+        print("Error: cannot open camera index 0")
         return None, None
-    
-    # Set fourcc variable
-    fourcc = VideoWriter.fourcc('M','J','P','G')
 
+    fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
     return cam, fourcc
 
-def record_fit0892(cam, fourcc, record_time_sec : int):
-    from cv2 import VideoWriter
+def record(cam, fourcc, sec: int):
+    """
+    Record `sec` seconds of video from `cam` into an AVI file.
+    """
+    # ensure output directory exists
+    FIT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
-    global out
+    # timestamped filename
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = FIT_VIDEO_DIR / f"{FIT_VIDEO_NAME_HEADER}_{stamp}.avi"
 
-    # Count the frames wrote to file
-    current_frame_count = 0
+    print(f"Recording to {out_path} for {sec} seconds @ {FPS} FPS...")
+    writer = cv2.VideoWriter(str(out_path), fourcc, FPS, (WIDTH, HEIGHT))
+    if not writer.isOpened():
+        print("Error: cannot open video writer")
+        return
 
-    # The max frame count is determined by multiplying the framerate and recording second
-    # e.g) record 3 second video with 30fps -> record 90 frames
-    max_frame_count = FIT0892_VIDEO_FRAMERATE * record_time_sec
-
-    # Set timestemp
-    timestamp = datetime.now().isoformat(sep=':', timespec='milliseconds')
-
-    # Set video file path
-    video_path = f"{FIT0892_VIDEO_DIR}/{FIT0892_VIDEO_NAME_HEADER}_{timestamp}.{FIT0892_VIDEO_FORMAT}"
-
-    out = VideoWriter(video_path, fourcc, FIT0892_VIDEO_FRAMERATE, (FIT0892_VIDEO_WIDTH, FIT0892_VIDEO_HEIGHT))
-
-    while current_frame_count < max_frame_count:
+    max_frames = FPS * sec
+    for idx in range(max_frames):
         ret, frame = cam.read()
-
         if not ret:
-            print("Error writing frame")
-            current_frame_count += 1
-            return
+            print(f"Warning: frame #{idx} capture failed")
+            break
+        writer.write(frame)
+        # optional: sleep to better match real-time FPS
+        # time.sleep(1.0 / FPS)
 
-        out.write(frame)
-        print(f"writing frame {current_frame_count}")
-        # only increment frame counter on successful frame read
-        current_frame_count += 1
+    writer.release()
+    print("Recording complete.")
 
-    out.release()
+def terminate(cam):
+    """
+    Release the camera.
+    """
+    if cam is not None:
+        cam.release()
+    print("Camera released.")
 
-# Camera Termination Method
-def terminate_fit0892(cam):
-    global out
+def main():
+    cam, fourcc = init_cam()
+    if cam is None or fourcc is None:
+        return
 
-    cam.release()
-    out.release()
+    try:
+        record(cam, fourcc, RECORD_SEC)
+    except KeyboardInterrupt:
+        print("Recording interrupted by user.")
+    finally:
+        terminate(cam)
 
-if __name__ == "__main__": 
-    init_fit0892()
-    record_fit0892(5)
-    terminate_fit0892()
+if __name__ == "__main__":
+    main()
+
