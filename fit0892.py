@@ -17,18 +17,19 @@ def init_cam():
     Open the USB camera via V4L2 and prepare MJPG codec.
     Returns (VideoCapture, fourcc) or (None, None) on failure.
     """
-    cam = cv2.VideoCapture(0, cv2.CAP_V4L2)
+    camera_index = 2
+    cam = cv2.VideoCapture(camera_index, cv2.CAP_V4L2)
     cam.set(cv2.CAP_PROP_FRAME_WIDTH,  WIDTH)
     cam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
     cam.set(cv2.CAP_PROP_FPS,         FPS)
     if not cam.isOpened():
-        print("Error: cannot open camera index 0")
+        print(f"Error: cannot open camera index {camera_index}")
         return None, None
 
     fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
     return cam, fourcc
 
-def record(cam, fourcc, sec: int):
+def record_fit0892(cam, fourcc, sec: int):
     """
     Record `sec` seconds of video from `cam` into an AVI file.
     """
@@ -58,7 +59,7 @@ def record(cam, fourcc, sec: int):
     writer.release()
     print("Recording complete.")
 
-def terminate(cam):
+def terminate_fit0892(cam):
     """
     Release the camera.
     """
@@ -72,11 +73,11 @@ def main():
         return
 
     try:
-        record(cam, fourcc, RECORD_SEC)
+        record_fit0892(cam, fourcc, RECORD_SEC)
     except KeyboardInterrupt:
         print("Recording interrupted by user.")
     finally:
-        terminate(cam)
+        terminate_fit0892(cam)
 
 if __name__ == "__main__":
     main()

@@ -66,7 +66,7 @@ def cameraapp_init():
         
     ## User Defined Initialization goes HERE
     try:
-        fit0892cam_instance, fit0892fourcc_instance = fit0892.init_fit0892()
+        fit0892cam_instance, fit0892fourcc_instance = fit0892.init_cam()
     except Exception as e:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Initializing fit0892 : {e}")
     
@@ -111,13 +111,17 @@ def fit0892_record_thread(fit0892cam_instance, fit0892fourcc_instance):
 
     while CAMERAAPP_RUNSTATUS:
         try:
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"FIT0892 Recording Start")
             fit0892.record_fit0892(fit0892cam_instance, fit0892fourcc_instance, CAMERA_RECORD_SEC)
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"FIT0892 Recording End")
+
         except Exception as e: 
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording fit0892 : {e}")
             time.sleep(1)
             return
 
     return
+
 def picam_record_thread(picam_instance, picamencoder_instance):
     global CAMERAAPP_RUNSTATUS
 
@@ -126,7 +130,11 @@ def picam_record_thread(picam_instance, picamencoder_instance):
 
     while CAMERAAPP_RUNSTATUS:
         try:
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Picam Recording Start")
             picam.record(picam_instance, picamencoder_instance, CAMERA_RECORD_SEC)
+            events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Picam Recording End")
+            
+
         except Exception as e:
             events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording picam : {e}")
             time.sleep(1)
