@@ -8,7 +8,7 @@ import os
 # ──────────────────────────────────────────────
 FIT_VIDEO_DIR         = pathlib.Path("FIT0892_Video")
 FIT_VIDEO_NAME_HEADER = "F"
-FIT_VIDEO_INDEX = 2
+FIT_VIDEO_INDEX       = 2
 RECORD_SEC            = 7
 FPS                   = 25
 WIDTH, HEIGHT         = 640,480
@@ -28,8 +28,8 @@ def fit0892_start_recording_process(sec: int):
 
     if fit0892_instance is not None:
         if fit0892_instance.poll() is None:
-            logdata("Process already open! terminating existing process first")
-            fit0892_instance.terminate()
+            logdata("Process already open! Please Terminate before reopening")
+            return
 
     timestamp = datetime.now().strftime("%m%d_%H%M%S")
     # Make the directory
@@ -78,7 +78,8 @@ def main():
     try:
         fit0892_start_recording_process(RECORD_SEC)
         while True:
-            time.sleep(1)
+            time.sleep(5)
+            fit0892_start_recording_process(RECORD_SEC)
     except KeyboardInterrupt:
         print("Recording interrupted by user.")
     finally:

@@ -44,8 +44,14 @@ def command_handler (recv_msg : msgstructure.MsgStructure):
             picam_stop_recording()
             fit0892_stop_recording()
     
+    elif recv_msg.MsgID == appargs.FlightlogicAppArg.MID_SendCameraActivateToCam:
+        events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"CAMERA ACTIVATION BY LOGIC")
+        picam_start_recording()
+        fit0892_start_recording()
+
     else:
         events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"MID {recv_msg.MsgID} not handled")
+        
     return
 
 def send_hk(Main_Queue : Queue):
