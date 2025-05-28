@@ -4,6 +4,7 @@ import os, time, pathlib
 # ──────────────────────────────────────────────
 PICAM_VIDEO_DIR = pathlib.Path("PICAM_Video")
 PICAM_VIDEO_NAME_HEADER = "P"
+PICAM_RECORDING = True
 RECORD_SEC = 5
 FPS = 30
 FRAME_US = int(1_000_000 / FPS)
@@ -33,14 +34,20 @@ def init_cam():
 
 def record(cam, enc, sec: int):
     from picamera2.outputs import FileOutput
-
+    global PICAM_RECORDING
+    
     PICAM_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%m%d_%H%M%S")
     fname = PICAM_VIDEO_DIR / f"{PICAM_VIDEO_NAME_HEADER}_{stamp}.mp4"
 
     #cam.start()
+    counter = 0
     cam.start_recording(enc, FileOutput(str(fname)))
-    time.sleep(sec)
+    while counter < sec:
+        if PICAM_RECORDING == False:
+            break
+        time.sleep(1)
+        counter += 1
     cam.stop_recording()
     #cam.close()
 

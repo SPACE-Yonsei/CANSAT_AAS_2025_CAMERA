@@ -99,7 +99,8 @@ def cameraapp_terminate(picam_instance):
 
     # Terminating fit0892 process
     fit0892_stop_recording()
-
+    picam_stop_recording()
+    
     # Terminating picam
     picam.terminate(picam_instance)
 
@@ -127,12 +128,16 @@ PICAM_RECORDING = False
 def picam_start_recording():
     global PICAM_RECORDING
     PICAM_RECORDING = True
+    picam.PICAM_RECORDING = True
+    
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Picam recording flag is TRUE")
     return
 
 def picam_stop_recording():
     global PICAM_RECORDING
     PICAM_RECORDING = False
+    picam.PICAM_RECORDING = False
+
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Picam recording flag is FALSE")
     return
 
