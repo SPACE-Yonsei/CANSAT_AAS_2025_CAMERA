@@ -57,7 +57,7 @@ def command_handler (recv_msg : msgstructure.MsgStructure):
 def send_hk(Main_Queue : Queue):
     global CAMERAAPP_RUNSTATUS
     while CAMERAAPP_RUNSTATUS:
-        cameraHK = msgstructure.MsgStructure
+        cameraHK = msgstructure.MsgStructure()
         msgstructure.send_msg(Main_Queue, cameraHK, appargs.CameraAppArg.AppID, appargs.HkAppArg.AppID, appargs.CameraAppArg.MID_SendHK, str(CAMERAAPP_RUNSTATUS))
         time.sleep(1)
     return
