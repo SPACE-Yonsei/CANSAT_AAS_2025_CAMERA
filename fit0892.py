@@ -8,7 +8,7 @@ import os
 # ──────────────────────────────────────────────
 FIT_VIDEO_DIR         = pathlib.Path("FIT0892_Video")
 FIT_VIDEO_NAME_HEADER = "F"
-FIT_VIDEO_INDEX       = 2
+FIT_VIDEO_INDEX       = 0
 RECORD_SEC            = 7
 FPS                   = 25
 WIDTH, HEIGHT         = 640,480
@@ -47,7 +47,7 @@ def fit0892_start_recording_process(sec: int):
         '-f', 'segment',               # Enable segmentation
         '-segment_time', f'{sec}',          # segment length
         '-reset_timestamps', '1',      # Restart timestamps per segment
-        f'{FIT_VIDEO_DIR}/{FIT_VIDEO_NAME_HEADER}_{timestamp}_%03d.avi' # output file name
+        f'{FIT_VIDEO_DIR}/{FIT_VIDEO_NAME_HEADER}_{timestamp}_%04d.avi' # output file name
     ]
 
     fit0892_instance = subprocess.Popen(cmd, stdout=fit0892log, stderr=fit0892log)
