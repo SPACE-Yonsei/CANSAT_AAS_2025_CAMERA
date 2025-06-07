@@ -129,6 +129,7 @@ from camera import picam
 CAMERA_RECORD_SEC = 7
 
 PICAM_RECORDING = False
+FIT0892_RECORDING = False
 
 # Simple wrapup function for managing camera
 def picam_start_recording():
@@ -148,10 +149,16 @@ def picam_stop_recording():
     return
 
 def fit0892_start_recording():
+    global FIT0892_RECORDING
+    FIT0892_RECORDING = True
+
     fit0892.fit0892_start_recording_process(CAMERA_RECORD_SEC)
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Fit0892 recording process started")
 
 def fit0892_stop_recording():
+    global FIT0892_RECORDING
+    FIT0892_RECORDING = False
+
     fit0892.fit0892_terminate_recording_process()
     events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Fit0892 recording process stopped")
 
@@ -177,6 +184,22 @@ def picam_record_thread(picam_instance, picamencoder_instance):
             time.sleep(0.1)
 
     return
+
+def fit0892_record_thread():
+    global CAMERAAPP_RUNSTATUS
+
+    while CAMERAAPP_RUNSTATUS:
+        if FIT0892_RECORDING == True:
+            try:
+               # events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.info, f"Try to Activate FIT0892 Process")
+                fit0892.fit0892_start_recording_process(CAMERA_RECORD_SEC)
+            
+            except Exception as e:
+                events.LogEvent(appargs.CameraAppArg.AppName, events.EventType.error, f"Error Recording FIT0892 : {e}")
+        time.sleep(1)
+    return
+            
+    
 # Put user-defined methods here!
 
 ######################################################
@@ -204,6 +227,9 @@ def cameraapp_main(Main_Queue : Queue, Main_Pipe : connection.Connection):
     # Spawn SB Message Listner Thread
     thread_dict["HKSender_Thread"] = threading.Thread(target=send_hk, args=(Main_Queue, ), name="HKSender_Thread")
     thread_dict["PicamRecorder_Thread"]  = threading.Thread(target=picam_record_thread, args=(picam_instance, picamencoder_instance), name="PicamRecorder_Thread")
+    thread_dict["Fit0892Recorder_Thread"]  = threading.Thread(target=fit0892_record_thread, name="Fit0892Recorder_Thread")
+
+
 
     # Spawn Each Threads
     for thread_name in thread_dict:
